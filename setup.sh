@@ -8,6 +8,9 @@ while getopts "p:m:h" opt; do
   case ${opt} in
     h )
       echo "Usage: ./setup.sh"
+      echo "Options:"
+      echo "  -m  Model to run (default: gemma:2b)"
+      echo "  -p  Port to run Ollama on (default: 11434)"
       echo "  -h  Display help"
       exit 0
       ;;

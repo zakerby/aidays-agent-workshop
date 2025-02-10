@@ -9,3 +9,17 @@ services:
     tty: true
     restart: unless-stopped
     image: ollama/ollama:latest
+
+  # Add the service python-app which is the Python Flask app defined in app folder and the Dockerfile in the app directory
+  python-app:
+    build:
+      context: ./app
+    container_name: python-app
+    ports:
+      - 5000:5000
+    pull_policy: always
+    tty: true
+    restart: unless-stopped
+
+volumes:
+  ollama: 
