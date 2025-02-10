@@ -2,14 +2,16 @@ from langchain.agents import initialize_agent, AgentType
 from langchain_community.llms import Ollama
 from langchain_community.tools import Tool
 import time
+import argparse
+
 
 from tools.tools import check_logs_for_errors, restart_container, check_endpoint_health
 
-def create_agent():
+def create_agent(ollama_url, model_name):
     try:
         llm = Ollama(
-            base_url="http://localhost:11434",
-            model="gemma2:2b"
+            base_url=ollama_url,
+            model=model_name
         )
 
         tools = [
@@ -42,9 +44,7 @@ def create_agent():
         print(f"Error creating agent: {e}")
         return None
     
-def main():
-    agent = create_agent()
-    
+def run_agent(agent):    
     if agent:
         while True:
             try:
@@ -62,6 +62,18 @@ def main():
             
             time.sleep(60)  # Wait 1 minute before next check
 
+
+    
+def main():
+    parser = argparse.ArgumentParser(description='Monitoring agent')
+    parser.add_argument('--llm_url', default='http://localhost:11434', help='LLM base URL')
+    parser.add_argument('--model', default='gemma2:2b', help='LLM model')
+    
+    args = parser.parse_args()
+    agent = create_agent(args.llm_url, args.model)
+    
+    run_agent(agent)
+    
 
 if __name__ == "__main__":
     main()
