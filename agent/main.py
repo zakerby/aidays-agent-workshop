@@ -1,12 +1,12 @@
 from typing import Optional
 from langchain_community.llms import Ollama
 from langchain.agents import create_react_agent, AgentExecutor
-from langchain_core.tools import Tool
+from langchain_core.tools import Tool,  StructuredTool
 from langchain import hub
 from langchain_core.prompts import PromptTemplate
 import time
 import argparse
-from tools.tools import check_logs_for_errors, restart_container, check_endpoint_health
+from tools.tools import check_logs_for_errors, restart_container, check_endpoint_health, LogCheckInput, ContainerRestartInput, EndpointHealthInput
 
 MONITORING_PROMPT = PromptTemplate.from_template(
     """You are a system monitoring agent responsible for maintaining a web application's health.
@@ -45,23 +45,23 @@ def create_agent(ollama_url: str, model_name: str) -> Optional[AgentExecutor]:
 
         # Define tools with more detailed descriptions
         tools = [
-            Tool(
+            StructuredTool(
                 name="check_health",
                 func=check_endpoint_health,
-                description="Use this first to check if the webapp is responding. Returns HTTP status code.",
-                return_direct=True
+                description="Check if the webapp is responding at the specified URL. Returns HTTP status code.",
+                args_schema=EndpointHealthInput
             ),
-            Tool(
+            StructuredTool(
                 name="check_logs",
                 func=check_logs_for_errors,
-                description="Check application logs for 500 errors. Use this if health check fails.",
-                return_direct=True
+                description="Check application logs for 500 errors in the specified container.",
+                args_schema=LogCheckInput
             ),
-            Tool(
+            StructuredTool(
                 name="restart_webapp",
                 func=restart_container,
-                description="Restart the web application container. Use this only if errors are found.",
-                return_direct=True
+                description="Restart the specified web application container.",
+                args_schema=ContainerRestartInput
             )
         ]
 
@@ -92,7 +92,7 @@ def create_agent(ollama_url: str, model_name: str) -> Optional[AgentExecutor]:
         print(f"Error creating agent: {e}")
         return None
      
-def run_agent(agent: AgentExecutor, interval: float) -> None:
+def run_agent(agent: AgentExecutor, monitored_container: str, webapp_url: str,  interval: float) -> None:
     if not agent:
         print("Agent initialization failed. Exiting.")
         return
@@ -102,14 +102,13 @@ def run_agent(agent: AgentExecutor, interval: float) -> None:
             response = agent.invoke(
                 {
                     "input": """Please monitor the web application:
-                    1. Check the current health status
-                    2. Review logs if there are issues
-                    3. Take corrective actions if needed
-                    4. Verify system health after any changes
+                    1. Check the health status at {webapp_url}
+                    2. If unhealthy, check logs for container '{monitored_container}'
+                    3. If needed, restart container '{monitored_container}'
+                    4. Verify the health status again
                     """
                 }
             )
-            
             # Extract and log the agent's reasoning and actions
             if isinstance(response, dict):
                 print(f"\nAgent Reasoning: {response.get('intermediate_steps', '')}")
@@ -131,6 +130,8 @@ def main():
     parser.add_argument('--model', default='gemma:2b', help='LLM model name')
     parser.add_argument('--interval', type=int, default=60, help='Monitoring interval in seconds')
     parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
+    parser.add_argument('--monitored_container', default='aidays-agent-logs-analysis-python-app', help='Name of the container to monitor')
+    parser.add_argument('--webapp_url', default='http://localhost:5000', help='URL of the web application to monitor')
     
     args = parser.parse_args()
     
@@ -138,7 +139,7 @@ def main():
     print(f"Monitoring interval: {args.interval} seconds")
     
     agent = create_agent(args.llm_url, args.model)
-    run_agent(agent, args.interval)
+    run_agent(agent, args.monitored_container, args.webapp_url, args.interval)
 
 if __name__ == "__main__":
     main()
