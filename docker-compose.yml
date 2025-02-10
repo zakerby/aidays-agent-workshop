@@ -20,6 +20,23 @@ services:
     pull_policy: always
     tty: true
     restart: unless-stopped
+    depends_on:
+      - python-app-db
+    environment:
+      - DATABASE_URL=postgresql://python_app:python_app@python-app-db:5432/python_app
+
+  python-app-db:
+    image: postgres:13
+    container_name: python-app-db
+    environment:
+      POSTGRES_USER: python_app
+      POSTGRES_PASSWORD: python_app
+      POSTGRES_DB: python_app
+    ports:
+      - 5432:5432
+    pull_policy: always
+    tty: true
+    restart: unless-stopped
 
 volumes:
   ollama: 
