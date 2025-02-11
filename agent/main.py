@@ -37,6 +37,30 @@ def get_llm(ollama_url: str, model_name: str) -> OllamaLLM:
     except Exception as e:
         print(f"Error initializing LLM: {e}")
         return None
+    
+def get_tools():
+    # Define tools with more detailed descriptions
+    tools = [
+        StructuredTool(
+            name="check_health",
+            func=check_endpoint_health,
+            description="Check if the webapp is responding at the specified URL. Returns HTTP status code.",
+            args_schema=EndpointHealthInput
+        ),
+        StructuredTool(
+            name="check_logs",
+            func=check_logs_for_errors,
+            description="Check application logs for 500 errors in the specified container.",
+            args_schema=LogCheckInput
+        ),
+        StructuredTool(
+            name="restart_webapp",
+            func=restart_container,
+            description="Restart the specified web application container.",
+            args_schema=ContainerRestartInput
+        )
+    ]
+    return tools  
 
 def create_agent(ollama_url: str, model_name: str) -> Optional[AgentExecutor]:
     try:
@@ -44,26 +68,7 @@ def create_agent(ollama_url: str, model_name: str) -> Optional[AgentExecutor]:
         llm = get_llm(ollama_url, model_name)
 
         # Define tools with more detailed descriptions
-        tools = [
-            StructuredTool(
-                name="check_health",
-                func=check_endpoint_health,
-                description="Check if the webapp is responding at the specified URL. Returns HTTP status code.",
-                args_schema=EndpointHealthInput
-            ),
-            StructuredTool(
-                name="check_logs",
-                func=check_logs_for_errors,
-                description="Check application logs for 500 errors in the specified container.",
-                args_schema=LogCheckInput
-            ),
-            StructuredTool(
-                name="restart_webapp",
-                func=restart_container,
-                description="Restart the specified web application container.",
-                args_schema=ContainerRestartInput
-            )
-        ]
+        tools = get_tools()
 
         # Get base prompt from LangChain hub and combine with custom prompt
         base_prompt = hub.pull("hwchase17/react")
