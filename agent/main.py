@@ -128,8 +128,8 @@ def run_agent(agent: AgentExecutor, monitored_container: str, webapp_url: str,  
             print(f"Error running agent: {e}")
         
         time.sleep(interval)  # Wait 1 minute before next check
-    
-def main():
+
+def parse_args():
     parser = argparse.ArgumentParser(description='AI Monitoring Agent')
     parser.add_argument('--llm_url', default='http://localhost:11434', help='LLM base URL')
     parser.add_argument('--model', default='gemma:2b', help='LLM model name')
@@ -140,8 +140,13 @@ def main():
     
     args = parser.parse_args()
     
+    return args
+    
+def main():
+    args = parse_args()
+    
     print(f"Starting monitoring agent with model: {args.model} on {args.llm_url}")
-    print(f"Monitoring interval: {args.interval} seconds")
+    print(f"Monitoring the app {args.monitored_container} at host {args.webapp_url}, polling every {args.interval} seconds")
     
     agent = create_agent(args.llm_url, args.model)
     run_agent(agent, args.monitored_container, args.webapp_url, args.interval)
