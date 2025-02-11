@@ -1,5 +1,6 @@
 from typing import Dict, Any
 from langchain_community.tools.shell.tool import ShellTool
+from langchain_core.tools import StructuredTool
 from langchain_core.tools import ToolException
 import requests
 from pydantic import BaseModel, Field
@@ -46,3 +47,28 @@ def restart_container(container_name: str = "webapp") -> str:
         return f"Container {container_name} restarted successfully"
     except Exception as e:
         return f"Failed to restart container: {str(e)}"
+    
+    
+def get_tools():
+    # Define tools with more detailed descriptions
+    tools = [
+        StructuredTool(
+            name="check_health",
+            func=check_endpoint_health,
+            description="Check if the webapp is responding at the specified URL. Returns HTTP status code.",
+            args_schema=EndpointHealthInput
+        ),
+        StructuredTool(
+            name="check_logs",
+            func=check_logs_for_errors,
+            description="Check application logs for 500 errors in the specified container.",
+            args_schema=LogCheckInput
+        ),
+        StructuredTool(
+            name="restart_webapp",
+            func=restart_container,
+            description="Restart the specified web application container.",
+            args_schema=ContainerRestartInput
+        )
+    ]
+    return tools  
