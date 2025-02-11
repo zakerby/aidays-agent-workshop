@@ -1,13 +1,9 @@
 from typing import Optional
-from langchain_ollama.llms import OllamaLLM
-from langchain.agents import create_react_agent, AgentExecutor
-from langchain_core.tools import Tool,  StructuredTool
-from langchain import hub
-from langchain_core.prompts import PromptTemplate
+from langchain.agents import AgentExecutor
 import time
 import argparse
 
-from agent.agent import create_agent
+from llm.agent import create_agent
 
 
 def run_agent(agent: AgentExecutor, monitored_container: str, webapp_url: str,  interval: float) -> None:
@@ -42,7 +38,7 @@ def run_agent(agent: AgentExecutor, monitored_container: str, webapp_url: str,  
         
         time.sleep(interval)  # Wait 1 minute before next check
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='AI Monitoring Agent')
     parser.add_argument('--llm_url', default='http://localhost:11434', help='LLM base URL')
     parser.add_argument('--model', default='gemma:2b', help='LLM model name')
@@ -55,7 +51,7 @@ def parse_args():
     
     return args
     
-def main():
+def main() -> None:
     args = parse_args()
     
     print(f"Starting monitoring agent with model: {args.model} on {args.llm_url}")

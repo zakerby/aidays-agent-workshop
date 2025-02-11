@@ -5,7 +5,7 @@ from langchain.agents import create_react_agent, AgentExecutor
 from langchain import hub
 from langchain_core.prompts import PromptTemplate
 
-from agent.llm import get_llm
+from llm.llm import get_llm
 from tools.tools import get_tools
 
 
