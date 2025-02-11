@@ -24,6 +24,7 @@ services:
       - python-app-db
     environment:
       - DATABASE_URL=postgresql://python_app:python_app@python-app-db:5432/python_app
+      - ENABLE_STRESS_NG=true
 
   python-app-db:
     image: postgres:13
