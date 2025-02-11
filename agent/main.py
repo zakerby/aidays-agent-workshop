@@ -1,5 +1,5 @@
 from typing import Optional
-from langchain_community.llms import Ollama
+from langchain_ollama.llms import OllamaLLM
 from langchain.agents import create_react_agent, AgentExecutor
 from langchain_core.tools import Tool,  StructuredTool
 from langchain import hub
@@ -26,9 +26,9 @@ MONITORING_PROMPT = PromptTemplate.from_template(
     """
 )
 
-def get_llm(ollama_url: str, model_name: str) -> Ollama:
+def get_llm(ollama_url: str, model_name: str) -> OllamaLLM:
     try:
-        llm  = Ollama(
+        llm  = OllamaLLM(
             base_url=ollama_url,
             model=model_name,
             temperature=0.1
