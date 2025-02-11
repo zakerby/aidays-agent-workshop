@@ -5,7 +5,6 @@ import argparse
 
 from llm.agent import create_agent
 
-
 def run_agent(agent: AgentExecutor, monitored_container: str, webapp_url: str,  interval: float) -> None:
     if not agent:
         print("Agent initialization failed. Exiting.")
