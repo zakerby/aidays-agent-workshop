@@ -49,14 +49,25 @@ if ! [ -x "$(command -v docker)" ]; then
   exit 1
 fi
 
-# Run Ollama in a Docker container
-docker run -d -v ollama:/root/.ollama -p $OLLAMA_PORT:11434 --name ollama ollama/ollama
+# Check if the Ollama container is already running
+if [ "$(docker ps -q -f name=ollama)" ]; then
+  echo "Ollama container is already running."
+else
+  echo "Ollama container is not running."
+  # Check if the Ollama container exists
+  if [ "$(docker ps -aq -f name=ollama)" ]; then
+    echo "Ollama container exists, but is not running, starting the container."
+    # Start the Ollama container
+    docker start ollama
+  else
+    echo "Ollama container does not exist, pulling the Ollama image and starting the container."
+    # Pull the Ollama image
+    docker pull ollama/ollama
 
-# Ensure that the container is running
-if ! [ "$(docker ps -q -f name=ollama)" ]; then
-  echo 'Error: Ollama container is not running.' >&2
-  exit 1
+    # Run Ollama in a Docker container
+    docker run -d -v ollama:/root/.ollama -p $OLLAMA_PORT:11434 --name ollama ollama/ollama
+  fi
 fi
 
 # Ollama run model gemma:2b
-docker exec -it ollama ollama run $LLM_MODEL
+docker exec -d ollama ollama run $LLM_MODEL
