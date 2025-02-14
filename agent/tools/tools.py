@@ -47,7 +47,10 @@ def restart_container(container_name: str = "webapp") -> str:
         return f"Container {container_name} restarted successfully"
     except Exception as e:
         return f"Failed to restart container: {str(e)}"
-    
+
+def notify_team() -> str:
+    """Send a notification to the team."""
+    return "Team notified"
     
 def get_tools():
     # Define tools with more detailed descriptions

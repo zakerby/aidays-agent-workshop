@@ -1,4 +1,3 @@
-from typing import Optional
 from langchain.agents import AgentExecutor
 import time
 import argparse
@@ -14,11 +13,13 @@ def run_agent(agent: AgentExecutor, monitored_container: str, webapp_url: str,  
         try:
             response = agent.invoke(
                 {
-                    "input": """Please monitor the web application:
-                    1. Check the health status at {webapp_url}
-                    2. If unhealthy, check logs for container '{monitored_container}'
-                    3. If needed, restart container '{monitored_container}'
-                    4. Verify the health status again
+                    "input": """
+                        Please monitor the web application:
+                            1. Check the health status at {webapp_url}
+                            2. If unhealthy, check logs for container '{monitored_container}'
+                            3. If needed, restart container '{monitored_container}'
+                            4. Verify the health status again
+                            5. If still unhealthy, escalate to the team
                     """
                 }
             )
