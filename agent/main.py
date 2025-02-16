@@ -1,33 +1,45 @@
 from typing import Optional
 from langchain.agents import AgentExecutor
+from langgraph.graph import Graph
 import time
 import argparse
 
 from llm.agent import create_agent
 
-def run_agent(agent: AgentExecutor, monitored_container: str, webapp_url: str,  interval: float) -> None:
+def get_prompt(webapp_url: str, monitored_container: str) -> str:
+    return f"""
+        Please monitor the web application:
+        1. Check the health status at {webapp_url}
+        2. If unhealthy, check logs for container '{monitored_container}'
+        3. If needed, restart container '{monitored_container}'
+        4. Verify the health status again
+    """
+
+def run_agent(agent: Graph, monitored_container: str, webapp_url: str, interval: float) -> None:
     if not agent:
         print("Agent initialization failed. Exiting.")
         return
 
     while True:
         try:
-            response = agent.invoke(
-                {
-                    "input": """Please monitor the web application:
-                    1. Check the health status at {webapp_url}
-                    2. If unhealthy, check logs for container '{monitored_container}'
-                    3. If needed, restart container '{monitored_container}'
-                    4. Verify the health status again
-                    """
-                }
-            )
-            # Extract and log the agent's reasoning and actions
-            if isinstance(response, dict):
-                print(f"\nAgent Reasoning: {response.get('intermediate_steps', '')}")
-                print(f"Final Response: {response.get('output', '')}")
-            else:
-                print(f"\nAgent Response: {response}")
+            # Initialize state
+            initial_state = {
+                "messages": [],
+                "next": "check_health",
+                "health_status": "",
+                "logs": "",
+                "actions_taken": []
+            }
+            
+            # Run the workflow
+            result = agent.invoke(initial_state)
+            
+            # Log results
+            print("\nMonitoring Cycle Results:")
+            print(f"Health Status: {result['health_status']}")
+            print(f"Actions Taken: {', '.join(result['actions_taken'])}")
+            if result['logs']:
+                print(f"Logs: {result['logs']}")
                 
         except KeyboardInterrupt:
             print("\nMonitoring stopped by user")
@@ -35,9 +47,21 @@ def run_agent(agent: AgentExecutor, monitored_container: str, webapp_url: str,  
         except Exception as e:
             print(f"Error running agent: {e}")
         
-        time.sleep(interval)  # Wait 1 minute before next check
-
+        time.sleep(interval)
+        
 def parse_args() -> argparse.Namespace:
+    """
+        Parse command line arguments
+        Parameters:
+            llm_url: str - LLM base URL
+            model: str - LLM model name
+            interval: int - Monitoring interval in seconds
+            verbose: bool - Enable verbose output
+            monitored_container: str - Name of the container to monitor
+            webapp_url: str - URL of the web application to monitor
+        Returns:
+            argparse.Namespace - Parsed arguments
+    """
     parser = argparse.ArgumentParser(description='AI Monitoring Agent')
     parser.add_argument('--llm_url', default='http://localhost:11434', help='LLM base URL')
     parser.add_argument('--model', default='gemma:2b', help='LLM model name')

@@ -1,7 +1,6 @@
 from typing import Dict, Any
 from langchain_community.tools.shell.tool import ShellTool
 from langchain_core.tools import StructuredTool
-from langchain_core.tools import ToolException
 import requests
 from pydantic import BaseModel, Field
 
