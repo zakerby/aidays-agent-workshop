@@ -34,7 +34,7 @@ def run_agent(agent: Graph, monitored_container: str, webapp_url: str, interval:
             result = agent.invoke(initial_state)
             
             # Log results
-            print("\nMonitoring Cycle Results:")
+            print("\n Monitoring Cycle Results:")
             print(f"Health Status: {result['health_status']}")
             print(f"Actions Taken: {', '.join(result['actions_taken'])}")
             if result['logs']:

@@ -72,15 +72,16 @@ def create_agent(ollama_url: str, model_name: str) -> Optional[Graph]:
             """Check the health status of the application"""
             for tool in tools:
                 if tool.name == "check_health":
-                    result = tool_executor.invoke({"tool": "check_health"})
+                    # Fix: Pass tool name directly
+                    result = tool_executor.invoke("check_health")
                     state["health_status"] = result
                     state["actions_taken"].append("health_check")
                     state["next"] = "analyze_status"
             return state
-
+        
         def analyze_status(state: AgentState) -> AgentState:
-            """Analyze health status and decide next action"""
-            if "error" in state["health_status"].lower() or "500" in state["health_status"]:
+            """Analyze health status and decide next steps"""
+            if state["health_status"] == "unhealthy":
                 state["next"] = "check_logs"
             else:
                 state["next"] = "end"
@@ -90,7 +91,8 @@ def create_agent(ollama_url: str, model_name: str) -> Optional[Graph]:
             """Check container logs if health check failed"""
             for tool in tools:
                 if tool.name == "get_logs":
-                    state["logs"] = tool_executor.invoke({"tool": "get_logs"})
+                    # Fix: Pass tool name directly
+                    state["logs"] = tool_executor.invoke("get_logs")
                     state["actions_taken"].append("logs_checked")
                     state["next"] = "handle_issues"
             return state
@@ -100,7 +102,8 @@ def create_agent(ollama_url: str, model_name: str) -> Optional[Graph]:
             if state["logs"] and ("error" in state["logs"].lower() or "exception" in state["logs"].lower()):
                 for tool in tools:
                     if tool.name == "restart_container":
-                        tool_executor.invoke({"tool": "restart_container"})
+                        # Fix: Pass tool name directly
+                        tool_executor.invoke("restart_container")
                         state["actions_taken"].append("container_restarted")
             state["next"] = "verify_health"
             return state
@@ -109,11 +112,11 @@ def create_agent(ollama_url: str, model_name: str) -> Optional[Graph]:
             """Verify health after taking actions"""
             for tool in tools:
                 if tool.name == "check_health":
-                    state["health_status"] = tool_executor.invoke({"tool": "check_health"})
+                    # Fix: Pass tool name directly
+                    state["health_status"] = tool_executor.invoke("check_health")
                     state["actions_taken"].append("health_verified")
             state["next"] = "end"
             return state
-
         # Create workflow graph
         workflow = StateGraph(AgentState)
 
@@ -142,3 +145,9 @@ def create_agent(ollama_url: str, model_name: str) -> Optional[Graph]:
     except Exception as e:
         print(f"Error creating agent: {e}")
         return None
+    
+def define_nodes(workf):
+    pass
+
+def define_edges():
+    pass
