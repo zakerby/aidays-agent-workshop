@@ -1,4 +1,3 @@
-from typing import Optional
 from langchain.agents import AgentExecutor
 from langgraph.graph import Graph
 import time
