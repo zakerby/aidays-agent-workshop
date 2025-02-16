@@ -123,6 +123,7 @@ def create_agent(ollama_url: str, model_name: str) -> Optional[Graph]:
         workflow.add_node("check_logs", check_logs)
         workflow.add_node("handle_issues", handle_issues)
         workflow.add_node("verify_health", verify_health)
+        workflow.add_node("end", lambda state: state)
 
         # Add edges
         workflow.set_entry_point("check_health")
