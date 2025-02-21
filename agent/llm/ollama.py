@@ -6,9 +6,9 @@ class Message:
     content: str  # Required attribute for smolagents
 
 class OllamaModel:
-    def __init__(self, model_name):
+    def __init__(self, hostname, model_name):
         self .model_name = model_name
-        self.client = ollama.Client(model_name)
+        self.client = ollama.Client(host=hostname)
         
     def __call__(self, messages, **kwargs):
         formatted_msgs = []
