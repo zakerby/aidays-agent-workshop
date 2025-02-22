@@ -1,6 +1,8 @@
+import time
+import argparse
+
 from smolagents import CodeAgent
 from dotenv import load_dotenv
-import time
 
 from .llm.ollama import OllamaModel
 from tools.agent_tools import get_monitoring_tools
@@ -51,6 +53,33 @@ def main():
             print(f"Error during monitoring: {e}")
         
         time.sleep(300)  # Wait 5 minutes between checks
+
+
+def parse_args() -> argparse.Namespace:
+    """
+        Parse command line arguments
+        Parameters:
+            llm_url: str - LLM base URL
+            model: str - LLM model name
+            interval: int - Monitoring interval in seconds
+            verbose: bool - Enable verbose output
+            monitored_container: str - Name of the container to monitor
+            webapp_url: str - URL of the web application to monitor
+        Returns:
+            argparse.Namespace - Parsed arguments
+    """
+    parser = argparse.ArgumentParser(description='AI Monitoring Agent')
+    parser.add_argument('--llm_url', default='http://localhost:11434', help='LLM base URL')
+    parser.add_argument('--model', default='gemma:2b', help='LLM model name')
+    parser.add_argument('--interval', type=int, default=60, help='Monitoring interval in seconds')
+    parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
+    parser.add_argument('--monitored_container', default='aidays-agent-logs-analysis-python-app', help='Name of the container to monitor')
+    parser.add_argument('--webapp_url', default='http://localhost:5000', help='URL of the web application to monitor')
+
+    args = parser.parse_args()
+
+    return args
+
 
 if __name__ == "__main__":
     main()
