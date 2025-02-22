@@ -9,6 +9,16 @@ from tools.agent_tools import get_monitoring_tools
 
 load_dotenv()
 
+AGENT_PROMPT = """
+    Monitor the Docker container health:
+        1. Check container logs for HTTP 500 errors
+        2. Check container metrics (CPU, memory, network usage)
+        3. If issues are found:
+        - On first detection: restart the container
+        - If issues persist after restart: notify support team
+        4. Report the current status and any actions taken
+"""
+
 def create_monitoring_agent():
     ollama_model = OllamaModel('http://localhost:11434', "gemma:2b")
     
@@ -25,18 +35,14 @@ def main():
     
     print("Starting container monitoring...")
     
+    # first ensure that the webapp is running
+    if agent.run(f"docker ps | grep {agent.webapp_container}") == "":
+        print(f"Web application container {agent.webapp_container} is not running, nothing  to do")
+        return
+    
     while True:
         try:
-            response = agent.run(
-                """Monitor the Docker container health:
-                1. Check container logs for HTTP 500 errors
-                2. Check container metrics (CPU, memory, network usage)
-                3. If issues are found:
-                   - On first detection: restart the container
-                   - If issues persist after restart: notify support team
-                4. Report the current status and any actions taken
-                """
-            )
+            response = agent.run(AGENT_PROMPT)
             
             # Track issues and escalate if needed
             if "restarted" in str(response):
@@ -79,7 +85,6 @@ def parse_args() -> argparse.Namespace:
     args = parser.parse_args()
 
     return args
-
 
 if __name__ == "__main__":
     main()
