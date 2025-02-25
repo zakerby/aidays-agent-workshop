@@ -9,15 +9,23 @@ from tools.agent_tools import get_monitoring_tools
 
 load_dotenv()
 
-AGENT_PROMPT = """
-    Monitor the Docker container health:
+
+
+def get_prompt(container_name: str, container_url: str) -> str:
+    agent_prompt = f"""
+        Monitor the container health and performance
+        Container: {container_name}
+        URL: {container_url}
+        
         1. Check container logs for HTTP 500 errors
         2. Check container metrics (CPU, memory, network usage)
         3. If issues are found:
         - On first detection: restart the container
         - If issues persist after restart: notify support team
         4. Report the current status and any actions taken
-"""
+    """
+    return agent_prompt
+
 
 def create_monitoring_agent():
     ollama_model = OllamaModel('http://localhost:11434', "gemma:2b")

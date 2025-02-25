@@ -3,7 +3,7 @@ import subprocess
 import json
 from datetime import datetime
 
-def check_container_logs(container_name: str) -> Tool:
+def check_container_logs() -> Tool:
     def _check_logs(container_name: str = "webapp") -> str:
         try:
             cmd = f"docker logs --since 5m {container_name} 2>&1 | grep -c '500'"
@@ -16,8 +16,7 @@ def check_container_logs(container_name: str) -> Tool:
     return Tool(
         name="check_logs",
         description="Check container logs for HTTP 500 errors in last 5 minutes",
-        function=_check_logs
-        input_parameters={"container_name": container_name}
+        function=_check_logs,
     )
 
 def check_container_metrics() -> Tool:
