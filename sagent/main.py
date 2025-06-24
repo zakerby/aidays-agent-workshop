@@ -34,7 +34,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--webapp_url', default='http://localhost:5000', help='URL of the web application to monitor')
     return parser.parse_args()
 
-
 def main() -> None:
     args = parse_args()
     print(f"Starting monitoring agent (smolagents) with model: {args.model} on {args.llm_url}")
