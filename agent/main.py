@@ -1,5 +1,6 @@
 import time
 import argparse
+from langchain.agents import AgentExecutor
 
 from smolagents import CodeAgent
 from dotenv import load_dotenv
