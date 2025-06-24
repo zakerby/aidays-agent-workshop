@@ -4,3 +4,5 @@ langchain-experimental==0.3.4
 langchain-ollama==0.2.3
 langgraph==0.2.72
 ollama==0.4.7
+smolagents==1.9.2
+dotenv==0.9.9
