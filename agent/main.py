@@ -1,6 +1,6 @@
-from langchain.agents import AgentExecutor
 import time
 import argparse
+from langchain.agents import AgentExecutor
 
 from llm.agent import create_agent
 
