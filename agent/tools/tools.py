@@ -1,77 +1,140 @@
-from typing import Dict, Any
-from langchain_community.tools.shell.tool import ShellTool
-from langchain_core.tools import StructuredTool
-from langchain_core.tools import ToolException
-import requests
-from pydantic import BaseModel, Field
+from smolagents import tool
+import docker
 
-class LogCheckInput(BaseModel):
-    container_name: str = Field(
-        default="webapp",
-        description="Name of the Docker container to check"
-    )
-
-class ContainerRestartInput(BaseModel):
-    container_name: str = Field(
-        default="webapp",
-        description="Name of the Docker container to restart"
-    )
-
-class EndpointHealthInput(BaseModel):
-    url: str = Field(
-        default="http://localhost:8080",
-        description="URL to check for health status"
-    )
-
+@tool
 def check_endpoint_health(url: str = "http://localhost:8080") -> str:
-    """Check if a web endpoint is responding."""
-    try:
-        response = requests.get(url, timeout=5)
-        return f"Status code: {response.status_code}"
-    except requests.RequestException as e:
-        return f"Error accessing webapp: {e}"
-
-def check_logs_for_errors(container_name: str = "webapp") -> str:
-    """Check Docker logs for 500 errors."""
-    try:
-        cmd = f"docker logs {container_name} 2>&1 | grep '500'"
-        result = ShellTool().run(cmd)
-        return result if result else "No 500 errors found"
-    except Exception as e:
-        return f"Error checking logs: {str(e)}"
-
-def restart_container(container_name: str = "webapp") -> str:
-    """Restart a Docker container."""
-    try:
-        result = ShellTool().run(f"docker restart {container_name}")
-        return f"Container {container_name} restarted successfully"
-    except Exception as e:
-        return f"Failed to restart container: {str(e)}"
-
-def notify_team() -> str:
-    """Send a notification to the team."""
-    return "Team notified"
+    """
+    Check the health status of a web application endpoint.
     
+    Args:
+        url (str): The URL of the web application endpoint to check.
+        
+    Returns:
+        str: The health status of the endpoint.
+    """
+    import requests
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            return f"Endpoint {url} is healthy."
+        else:
+            return f"Endpoint {url} returned status code {response.status_code}."
+    except requests.exceptions.RequestException as e:
+        return f"Error checking endpoint {url}: {str(e)}"
+
+@tool
+def get_container_status(container_name: str) -> str:
+    """
+    Check the status of a Docker container.
+    
+    Args:
+        container_name (str): The name of the Docker container to check.
+        
+    Returns:
+        str: The status of the container (e.g., running, stopped, etc.).
+    """
+    try:
+        client = docker.from_env()
+        container = client.containers.get(container_name)
+        return f"Container '{container_name}' is {container.status}."
+    except docker.errors.NotFound:
+        return f"Container '{container_name}' not found."
+    except Exception as e:
+        return f"Error checking container status: {str(e)}"
+    
+@tool
+def get_recent_logs(container_name: str, lines: int = 100) -> str:
+    """
+    Fetch the most recent logs from a Docker container.
+        
+    Args:
+        container_name (str): The name of the Docker container to fetch logs from.
+        lines (int): The number of log lines to retrieve (default is 100).
+        
+    Returns:
+        str: The recent logs from the container.
+    """
+    try:
+        client = docker.from_env()
+        container = client.containers.get(container_name)
+        logs = container.logs(tail=lines).decode('utf-8')
+        return logs if logs else "No logs found."
+    except docker.errors.NotFound:
+        return f"Container '{container_name}' not found."
+    except Exception as e:
+        return f"Error fetching logs: {str(e)}"
+    
+@tool
+def check_resource_usage() -> str:
+    """
+    Check the resource usage of the system.
+    
+    Args:
+        None
+    Returns:
+        str: A summary of resource usage (CPU, memory, disk, etc.).
+    """
+    try:
+        client = docker.from_env()
+        stats = client.stats(stream=False)
+        cpu_usage = stats['cpu_stats']['cpu_usage']['total_usage']
+        memory_usage = stats['memory_stats']['usage']
+        disk_usage = stats['blkio_stats']['io_service_bytes_recursive']
+        
+        return (f"CPU Usage: {cpu_usage} nanoseconds\n"
+                f"Memory Usage: {memory_usage} bytes\n"
+                f"Disk Usage: {disk_usage}")
+    except Exception as e:
+        return f"Error checking resource usage: {str(e)}"
+    
+@tool
+def send_slack_alert(message: str) -> str:
+    """
+    Send an alert message to a Slack channel.
+    
+    Args:
+        message (str): The alert message to send.
+        
+    Returns:
+        str: Confirmation of the alert sent.
+    """
+    pass  # Implement the logic to send a Slack alert
+
+@tool
+def run_self_heal_script(script_name: str) -> str: 
+    """Run a self-healing script to fix issues."""
+    try:
+        client = docker.from_env()
+        container = client.containers.get(script_name)
+        container.restart()
+        return f"Self-heal script '{script_name}' executed successfully."
+    except docker.errors.NotFound:
+        return f"Container '{script_name}' not found."
+    except Exception as e:
+        return f"Error running self-heal script: {str(e)}"
+    
+@tool
+def get_container_environment_variables(container_name: str) -> str:
+    """Get the configuration of a Docker container."""
+    try:
+        client = docker.from_env()
+        container = client.containers.get(container_name)
+        env_vars = container.attrs['Config']['Env']
+        return f"Environment variables for '{container_name}': {env_vars}"
+    except docker.errors.NotFound:
+        return f"Container '{container_name}' not found."
+    except Exception as e:
+        return f"Error fetching environment variables: {str(e)}"
+
 def get_tools():
-    # Define tools with more detailed descriptions
-    tools = [
-        StructuredTool(
-            name="check_health",
-            func=check_endpoint_health,
-            description="Check if the webapp is responding at the specified URL. Returns HTTP status code.",
-            args_schema=EndpointHealthInput
-        ),
-        StructuredTool(
-            name="check_logs",
-            func=check_logs_for_errors,
-            description="Check application logs for 500 errors in the specified container.",
-            args_schema=LogCheckInput
-        ),
-        StructuredTool(
-            name="restart_webapp",
-            func=restart_container,
-            description="Restart the specified web application container.",
-            args_schema=ContainerRestartInput
-        )
+    """
+    Returns a list of tools available for the agent
+    """
+    return [
+        check_endpoint_health,
+        get_container_status,
+        get_recent_logs,
+        check_resource_usage,
+        send_slack_alert,
+        run_self_heal_script
     ]
-    return tools  
