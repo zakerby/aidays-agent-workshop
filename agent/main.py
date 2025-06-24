@@ -4,7 +4,6 @@ import argparse
 
 from tools.tools import get_tools
 
-
 def get_model(llm_url: str, model_name: str = "gemma:2b") -> LiteLLMModel:
     return LiteLLMModel(
         model_name=model_name,
