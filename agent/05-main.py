@@ -1,13 +1,15 @@
-from smolagents import CodeAgent, LiteLLMModel
+from smolagents import CodeAgent, LiteLLMModel, ToolCallingAgent
 import time
 import argparse
 
+import docker
+
 from tools.tools import get_tools
 
-def get_model(llm_url: str, model_name: str = "gemma:2b") -> LiteLLMModel:
+def get_model(llm_url: str, model_name: str = "ollama_chat/llama3.2") -> LiteLLMModel:
     return LiteLLMModel(
-        model_name=model_name,
-        base_url=llm_url,
+        model_id=model_name,
+        api_base=llm_url,
         max_tokens=1024,
         temperature=0.1,
         top_p=0.95,
@@ -20,16 +22,31 @@ def create_agent(llm_url: str, model: str) -> CodeAgent:
         Create and return a CodeAgent instance with the specified LLM URL and model.
     """
     model = get_model(llm_url, model)
-    agent = CodeAgent(model=model, tools=get_tools())
+    agent = ToolCallingAgent(
+        model=model, 
+        tools=get_tools(),
+        name="ai_monitoring_agent",
+        description="An agent that monitors a web application and manages its health.",
+        verbosity_level=2
+    )
     
-    return agent
+    manager_agent = CodeAgent(
+        model=model,
+        verbosity_level=2,
+        name="ai_monitoring_manager_agent",
+        description="An agent that manages other agents to monitor a web application.",
+        managed_agents=[agent],
+        tools=[]
+    )
+    
+    return manager_agent
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='AI Monitoring Agent (smolagents)')
     parser.add_argument('--llm_url', default='http://localhost:11434', help='LLM base URL')
     parser.add_argument('--model', default='gemma:2b', help='LLM model name')
     parser.add_argument('--interval', type=int, default=60, help='Monitoring interval in seconds')
-    parser.add_argument('--monitored_container', default='aidays-agent-logs-analysis-python-app', help='Name of the container to monitor')
+    parser.add_argument('--monitored_container', default='python-app', help='Name of the container to monitor')
     parser.add_argument('--webapp_url', default='http://localhost:5000', help='URL of the web application to monitor')
     return parser.parse_args()
 
@@ -48,7 +65,6 @@ def main() -> None:
             4. Verify the health status again
             5. If still unhealthy, escalate to the team
         """.format(webapp_url=args.webapp_url, monitored_container=args.monitored_container),
-        interval=args.interval,
     )
 
 if __name__ == "__main__":
