@@ -7,7 +7,7 @@ FROM python:3.8-slim
 WORKDIR /app
 ARG ENABLE_STRESS_NG
 
-RUN if [ "$ENABLE_STRESS_NG" = "true" ]; then echo "Stress-ng is enabled";apt-get update && apt-get install -y stress-ng; else echo "Stress-ng is disabled"; fi
+RUN "Stress-ng is enabled";apt-get update && apt-get install -y stress-ng
 
 # Copy the dependencies file to the working directory
 COPY requirements.txt .

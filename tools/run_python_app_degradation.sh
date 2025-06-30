@@ -46,8 +46,10 @@ fi
 # CPU or Memory case
 if [ "$MODE" == "cpu" ] || [ "$MODE" == "memory" ]; then
     echo "Degrading performance of container $CONTAINER_NAME with mode $MODE for $DURATION seconds"
+    echo "python degrade_performance.py --container $CONTAINER_NAME --mode $MODE --duration $DURATION"
     python degrade_performance.py --container $CONTAINER --mode $MODE --duration $DURATION
 else
     echo "Degrading performance of container $CONTAINER_NAME with mode $MODE"
+    echo "python degrade_performance.py --container $CONTAINER_NAME --mode $MODE"
     python degrade_performance.py --container $CONTAINER --mode $MODE
 fi

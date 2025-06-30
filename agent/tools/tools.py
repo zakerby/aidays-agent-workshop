@@ -144,7 +144,6 @@ def get_tools():
     """
     return [
         check_endpoint_health,
-        get_container_status,
         get_recent_logs,
         check_resource_usage,
         send_slack_alert,

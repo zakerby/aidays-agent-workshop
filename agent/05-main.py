@@ -1,8 +1,5 @@
 from smolagents import CodeAgent, LiteLLMModel, ToolCallingAgent
-import time
 import argparse
-
-import docker
 
 from tools.tools import get_tools
 
@@ -29,17 +26,8 @@ def create_agent(llm_url: str, model: str) -> CodeAgent:
         description="An agent that monitors a web application and manages its health.",
         verbosity_level=2
     )
-    
-    manager_agent = CodeAgent(
-        model=model,
-        verbosity_level=2,
-        name="ai_monitoring_manager_agent",
-        description="An agent that manages other agents to monitor a web application.",
-        managed_agents=[agent],
-        tools=[]
-    )
-    
-    return manager_agent
+
+    return agent
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='AI Monitoring Agent (smolagents)')
@@ -57,14 +45,25 @@ def main() -> None:
     agent = create_agent(args.llm_url, args.model)
     
     agent.run(
+        f"""
+        You are an autonomous monitoring agent for a web application running in a Docker container.
+
+        Your monitoring loop is as follows:
+
+        1. Use the `check_endpoint_health` tool on {args.webapp_url}.
+        2. If the result indicates the endpoint is healthy (status 200 OK), wait {args.interval} seconds and repeat step 1.
+        3. If the result indicates the endpoint is unhealthy (status not 200 OK or 500 error):
+            a. Use the `get_container_logs` tool on the container '{args.monitored_container}' to retrieve recent logs.
+            b. Analyze the logs for signs of a crash or error (look for keywords like "error", "exception", "crash", or stack traces).
+            c. If a crash or error is detected in the logs:
+                i. Use the `restart_container` tool on '{args.monitored_container}'.
+                ii. After restarting, use the `check_endpoint_health` tool again on {args.webapp_url}.
+                iii. If the endpoint is now healthy, resume monitoring as in step 1.
+                iv. If the endpoint is still unhealthy, use the `send_slack_alert` tool to notify the team with a summary of the issue.
+            d. If no crash or error is detected in the logs, use the `send_slack_alert` tool to notify the team with the log output and health check result.
+
+        Always use the appropriate tool for each step and provide clear, concise output for each action.
         """
-        Please monitor the web application:
-            1. Check the health status at {webapp_url}
-            2. If unhealthy, check logs for container '{monitored_container}'
-            3. If needed, restart container '{monitored_container}'
-            4. Verify the health status again
-            5. If still unhealthy, escalate to the team
-        """.format(webapp_url=args.webapp_url, monitored_container=args.monitored_container),
     )
 
 if __name__ == "__main__":

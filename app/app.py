@@ -5,6 +5,7 @@ from api.routes.health_check.routes import health_check_blueprint
 
 def create_app() -> Flask:
     app = Flask(__name__)
+    app.config["HEALTHY"] = True
     return app
 
 def register_blueprints(app: Flask):
