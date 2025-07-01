@@ -2,7 +2,7 @@ from smolagents import tool
 import docker
 
 @tool
-def check_endpoint_health(url: str = "http://localhost:8080") -> str:
+def check_endpoint_health(url: str = "http://localhost:5000") -> str:
     """
     Check the health status of a web application endpoint.
     
@@ -14,7 +14,7 @@ def check_endpoint_health(url: str = "http://localhost:8080") -> str:
     """
     import requests
     try:
-        response = requests.get(url)
+        response = requests.get(f"{url}/health_check")
         if response.status_code == 200:
             return f"Endpoint {url} is healthy."
         else:
@@ -101,21 +101,33 @@ def send_slack_alert(message: str) -> str:
     pass  # Implement the logic to send a Slack alert
 
 @tool
-def run_self_heal_script(script_name: str) -> str: 
-    """Run a self-healing script to fix issues."""
+def restart_container(container_name: str) -> str: 
+    """
+    Restart a Docker container to self-heal it.
+    Args:
+        container_name (str): The name of the Docker container to fetch logs from.
+    Returns:
+        str: Confirmation of the restart action or an error message.
+    """
     try:
         client = docker.from_env()
-        container = client.containers.get(script_name)
+        container = client.containers.get(container_name)
         container.restart()
-        return f"Self-heal script '{script_name}' executed successfully."
+        return f"Self-heal script '{container_name}' executed successfully."
     except docker.errors.NotFound:
-        return f"Container '{script_name}' not found."
+        return f"Container '{container_name}' not found."
     except Exception as e:
         return f"Error running self-heal script: {str(e)}"
     
 @tool
 def get_container_environment_variables(container_name: str) -> str:
-    """Get the configuration of a Docker container."""
+    """
+    Get the configuration of a Docker container.
+    Args:
+        container_name (str): The name of the Docker container to fetch environment variables from.
+    Returns:
+        str: The environment variables of the container or an error message.
+    """
     try:
         client = docker.from_env()
         container = client.containers.get(container_name)
@@ -132,9 +144,8 @@ def get_tools():
     """
     return [
         check_endpoint_health,
-        get_container_status,
         get_recent_logs,
         check_resource_usage,
         send_slack_alert,
-        run_self_heal_script
+        restart_container
     ]
