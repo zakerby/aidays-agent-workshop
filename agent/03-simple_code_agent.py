@@ -1,7 +1,10 @@
+# Example of a simple code agent that can perform calculations
+# This agent uses the `eval` function to calculate mathematical expressions.
+
 from smolagents import CodeAgent, LiteLLMModel, tool
 
 model = LiteLLMModel(
-    model_id="ollama_chat/llama3.2",
+    model_id="ollama_chat/codellama",
     api_base="http://localhost:11434",  # replace with remote open-ai compatible server if necessary
     # ollama default is 2048 which will often fail horribly. 8192 works for easy tasks, more is better. Check https://huggingface.co/spaces/NyxKrage/LLM-Model-VRAM-Calculator to calculate how much VRAM this will need for the selected model.
     num_ctx=8192,
@@ -22,13 +25,14 @@ def calc_tool(expression: str) -> str:
     except Exception as e:
         return f"Error calculating expression '{expression}': {str(e)}"
 
-
-
 agent = CodeAgent(
     model=model,
     tools=[calc_tool],
     verbosity_level=2,
 )
+
+print(f"""I am a simple code agent that can perform calculations.
+      Type 'exit' or 'quit' to stop.""")
 
 while True:
     try:

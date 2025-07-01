@@ -31,7 +31,7 @@ def get_latitude_longitude(location: str) -> str:
 
 
 @tool
-def get_weather(latitude: float, longitude: float) -> str:
+def get_current_weather(latitude: float, longitude: float) -> str:
     """
     Get current weather at given latitude and longitude.
 
@@ -58,7 +58,7 @@ def get_weather(latitude: float, longitude: float) -> str:
     return f"Current weather: {temp}{unit}, wind speed {wind} km/h"
 
 agent = ToolCallingAgent(
-            tools=[get_latitude_longitude, get_weather, WebSearchTool()], 
+            tools=[get_latitude_longitude, get_current_weather, WebSearchTool()], 
             model=model, 
             verbosity_level=2,
         )
@@ -70,6 +70,11 @@ while True:
         user_input = input("Ask a question: ")
         if user_input.lower() in ["exit", "quit"]:
             break
+        
+        # Add control here to ensure the agent can handle the input
+        if "weather" not in user_input.lower():
+            print("I can only answer questions about the current weather. Please ask something related to weather.")
+            continue
         
         response = agent.run(user_input)
         print("Response:", response)
